@@ -28,6 +28,8 @@ async function run() {
     const userCollection = database.collection('users');
     // create product collection
     const productCollection = database.collection('product');
+    // create product collection
+    const reviewCollection = database.collection('review');
     app.post('/user',async(req,res)=>{
         const data = req.body;
         // console.log(req.body);
@@ -60,7 +62,32 @@ async function run() {
       const query = { _id: ObjectId(id) };
       const result = await productCollection.deleteOne(query);
       res.json(result);
-  });
+    });
+    app.post('/admin',async(req,res)=>{
+      const data = req.body;
+      const requesterAccount = await userCollection.findOne({ email: data.requester });
+      // console.log(requesterAccount);
+      if(requesterAccount.role === 'admin'){
+        const filter = { email: data.email };
+        const updateDoc = { $set: { role: 'admin' } };
+        const result = await userCollection.updateOne(filter, updateDoc);
+        res.json(result);
+      }else{
+        res.json({status:401});
+      }
+    })
+    //get review
+    app.get('/review',async(req,res)=>{
+      const cursor = reviewCollection.find({});
+      const result = await cursor.toArray();
+      res.json(result);
+    });
+    //add review
+    app.post('/review',async(req,res)=>{
+      const data = req.body;
+      const result = await reviewCollection.insertOne(data);
+      res.json(result);
+    });
     console.log("Connected successfully to server");
   } finally {
     // Ensures that the client will close when you finish/error
