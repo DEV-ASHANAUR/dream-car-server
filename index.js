@@ -28,8 +28,12 @@ async function run() {
     const userCollection = database.collection('users');
     // create product collection
     const productCollection = database.collection('product');
-    // create product collection
+    // create review collection
     const reviewCollection = database.collection('review');
+    // create order collection
+    const orderCollection = database.collection('order');
+    // send message
+    const messageCollection = database.collection('message');
     app.post('/user',async(req,res)=>{
         const data = req.body;
         // console.log(req.body);
@@ -47,9 +51,16 @@ async function run() {
     //get product
     app.get('/product',async(req,res)=>{
       const cursor = productCollection.find({});
-      const allorder = await cursor.toArray();
-      res.json(allorder);
+      const allproduct = await cursor.toArray();
+      res.json(allproduct);
     });
+    //get product by id
+    app.get('/product/:id',async(req,res)=>{
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const product = await productCollection.findOne(query);
+      res.json(product);
+  });
     //add product
     app.post('/product',async(req,res)=>{
       const data = req.body;
@@ -63,10 +74,59 @@ async function run() {
       const result = await productCollection.deleteOne(query);
       res.json(result);
     });
+    //get all order
+    app.get('/order',async(req,res)=>{
+      const cursor = orderCollection.find({});
+      const order = await cursor.toArray();
+      res.json(order);
+    });
+    //add order
+    app.post('/order',async(req,res)=>{
+      const data = req.body;
+      const result = await orderCollection.insertOne(data);
+      res.json(result);
+    });
+    //delete order
+    app.delete('/order/:id',async(req,res)=>{
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await orderCollection.deleteOne(query);
+      res.json(result);
+    });
+    //update status
+    app.put('/order/:id',async(req,res)=>{
+      const id = req.params.id;
+      const itemData = req.body;
+      const filter = { _id:ObjectId(id) };
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          name:itemData.name,
+          email:itemData.email,
+          phone:itemData.phone,
+          address:itemData.address,
+          product_id:itemData.product_id,
+          product_name:itemData.product_name,
+          details:itemData.details,
+          price:itemData.price,
+          status:itemData.status
+        },
+      };
+      const result = await orderCollection.updateOne(filter, updateDoc, options);
+      res.json(result);
+    })
+    //get my order
+    app.get('/myorder/:email',async(req,res)=>{
+      const email = req.params.email;
+      const cursor = orderCollection.find({email:email});
+      const myorder = await cursor.toArray();
+      res.json(myorder);
+    });
+    //create admin
     app.post('/admin',async(req,res)=>{
       const data = req.body;
       const requesterAccount = await userCollection.findOne({ email: data.requester });
-      // console.log(requesterAccount);
+      
       if(requesterAccount.role === 'admin'){
         const filter = { email: data.email };
         const updateDoc = { $set: { role: 'admin' } };
@@ -86,6 +146,12 @@ async function run() {
     app.post('/review',async(req,res)=>{
       const data = req.body;
       const result = await reviewCollection.insertOne(data);
+      res.json(result);
+    });
+    //store message
+    app.post('/message',async(req,res)=>{
+      const data = req.body;
+      const result = await messageCollection.insertOne(data);
       res.json(result);
     });
     console.log("Connected successfully to server");
