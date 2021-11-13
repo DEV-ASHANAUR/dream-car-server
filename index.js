@@ -128,10 +128,15 @@ async function run() {
       const requesterAccount = await userCollection.findOne({ email: data.requester });
       
       if(requesterAccount.role === 'admin'){
-        const filter = { email: data.email };
-        const updateDoc = { $set: { role: 'admin' } };
-        const result = await userCollection.updateOne(filter, updateDoc);
-        res.json(result);
+        const checkAccount = await userCollection.findOne({ email: data.email });
+        if(checkAccount){
+          const filter = { email: data.email };
+          const updateDoc = { $set: { role: 'admin' } };
+          const result = await userCollection.updateOne(filter, updateDoc);
+          res.json(result);
+        }else{
+          res.json({status:404});
+        }
       }else{
         res.json({status:401});
       }
